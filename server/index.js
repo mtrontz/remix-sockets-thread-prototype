@@ -11,6 +11,7 @@ const MODE = process.env.NODE_ENV
 const BUILD_DIR = path.join(process.cwd(), 'server/build')
 
 const app = express()
+app.use(compression());
 
 const httpServer = createServer(app)
 const io = new Server(httpServer)
@@ -29,13 +30,11 @@ io.on('connection', (socket) => {
   })
 })
 
-app.use(compression())
-
 // You may want to be more aggressive with this caching
-app.use(express.static('public', { maxAge: '1h' }))
+app.use(express.static("public", { maxAge: "1h" }));
 
 // Remix fingerprints its assets so we can cache forever
-app.use(express.static('public/build', { immutable: true, maxAge: '1y' }))
+app.use(express.static("public/build", { immutable: true, maxAge: "1y" }));
 
 app.use(morgan('tiny'))
 app.all(
@@ -49,11 +48,25 @@ app.all(
       }
 )
 
-const port = process.env.PORT
+const port = process.env.PORT || 8002;
 httpServer.listen(port, () => {
   console.log(`Express server listening on port ${port}`)
 })
 
+const ioMessages = io.of("/messages")
+ioMessages.on("connection", (socket) => {
+  console.log(`a user connected: ${socket.id}`);
+  socket.emit("serverMsg", `user: ${socket.id}`);
+  console.log("emitted");
+  socket.on("post", (message) => {
+    console.log("message: ", message);
+    socket.join(message.roomId);
+    ioMessages.to(message.roomId).emit("serverMsg", message);
+  })
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+});
 ////////////////////////////////////////////////////////////////////////////////
 function purgeRequireCache() {
   // purge require cache on requests for "server side HMR" this won't let
@@ -63,7 +76,9 @@ function purgeRequireCache() {
   // for you by default
   for (const key in require.cache) {
     if (key.startsWith(BUILD_DIR)) {
-      delete require.cache[key]
+      delete require.cache[key];
     }
   }
 }
+
+

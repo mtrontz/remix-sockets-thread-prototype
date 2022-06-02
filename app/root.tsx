@@ -1,15 +1,15 @@
 import {
   Links,
-  LinksFunction,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  json
 } from 'remix'
 import React from 'react'
-import type { MetaFunction } from 'remix'
+import type { MetaFunction, LinksFunction, LoaderFunction } from 'remix'
 import { connect } from './ws-client'
 import { Socket } from 'socket.io-client'
 import { wsContext } from './ws-context'
@@ -33,6 +33,18 @@ export const links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: styles }]
 }
 
+type LoaderData = {
+  ENV: { CONNECTION_URL: string | undefined }
+}
+
+export let loader: LoaderFunction = () => {
+  return json<LoaderData>({
+    ENV: {
+      CONNECTION_URL: process.env.CONNECTION_URL,
+    },
+  })
+}
+
 export default function App() {
   const [socket, setSocket] =
     React.useState<Socket<DefaultEventsMap, DefaultEventsMap>>()
@@ -52,19 +64,7 @@ export default function App() {
       </wsContext.Provider>
     </Document>
   )
-}
-
-type LoaderData = {
-  ENV: { CONNECTION_URL: string | undefined }
-}
-
-export function loader(): LoaderData {
-  return {
-    ENV: {
-      CONNECTION_URL: process.env.CONNECTION_URL,
-    },
-  }
-}
+};
 
 function Document({
   children,
