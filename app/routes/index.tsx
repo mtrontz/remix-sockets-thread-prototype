@@ -2,12 +2,13 @@ import * as React from 'react'
 import { v4 } from 'uuid'
 import { Comment } from '~/components/Comment'
 import { CommentType } from '~/types'
-import { buildAuthorName } from '~/utils'
+import { buildAuthorName, buildComments } from '~/utils'
 import { wsContext } from '~/ws-context'
 
 export default function Thread() {
-  const [commentText, setCommentText] = React.useState('')
-  const [comments, setComments] = React.useState<CommentType[]>([])
+  const [commentText, setCommentText] = React.useState('');
+  const [comments, setComments] = React.useState<CommentType[]>([]);
+  
   const socket = React.useContext(wsContext)
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -33,7 +34,15 @@ export default function Thread() {
 
     socket.on('send-server-comment', (newComments) => {
       setComments(newComments)
-    })
+    });
+
+    if (comments.length == 0) {
+      const x = buildComments(5);
+      setComments(x);
+      x.forEach((com) => {
+        socket!.emit('send-client-comment', com)
+      })
+    }
   }, [socket])
 
   return (

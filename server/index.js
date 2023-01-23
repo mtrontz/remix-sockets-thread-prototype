@@ -30,6 +30,11 @@ io.on('connection', (socket) => {
   })
 })
 
+// … somewhere in your http server code 
+// io.on('upgrade', function (req, socket, head) {
+//   socket.handleUpgrade(req, socket, head);
+// });
+
 // You may want to be more aggressive with this caching
 app.use(express.static("public", { maxAge: "1h" }));
 
@@ -67,6 +72,7 @@ ioMessages.on("connection", (socket) => {
     console.log("user disconnected");
   });
 });
+
 ////////////////////////////////////////////////////////////////////////////////
 function purgeRequireCache() {
   // purge require cache on requests for "server side HMR" this won't let
